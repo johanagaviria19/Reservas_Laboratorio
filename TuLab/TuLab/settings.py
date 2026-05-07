@@ -117,6 +117,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Authentication
+# Authentication Settings
+LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'reserva_list'
 LOGOUT_REDIRECT_URL = 'login'
