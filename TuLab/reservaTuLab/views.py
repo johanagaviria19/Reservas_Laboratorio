@@ -94,18 +94,37 @@ class ReservaStatusUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVie
         messages.success(self.request, f"Estado de la reserva actualizado a {form.instance.get_estado_display()}.")
         return super().form_valid(form)
 
+# --- EXPORTACIÓN Y ESTADÍSTICAS ---
+
+def escape_csv_field(value):
+    """Escapa campos para prevenir inyección CSV (fórmulas en Excel/Sheets)"""
+    if value is None:
+        return ""
+    str_val = str(value)
+    if str_val.startswith(('=', '+', '-', '@')):
+        return "'" + str_val
+    return str_val
+
 def exportar_reservas_csv(request):
     if not request.user.is_superuser:
         return redirect('reserva_list')
         
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="reservas.csv"'
-    
-    writer = csv.writer(response)
+
+    writer = csv.writer(response, quoting=csv.QUOTE_ALL)
     writer.writerow(['Usuario', 'Laboratorio', 'Fecha', 'Inicio', 'Fin', 'Estado', 'Motivo'])
-    
+
     reservas = Reserva.objects.all()
     for r in reservas:
-        writer.writerow([r.usuario.username, r.laboratorio, r.fecha, r.hora_inicio, r.hora_fin, r.get_estado_display(), r.motivo])
-        
+        writer.writerow([
+            escape_csv_field(r.usuario.username),
+            escape_csv_field(r.laboratorio),
+            r.fecha,
+            r.hora_inicio,
+            r.hora_fin,
+            r.get_estado_display(),
+            escape_csv_field(r.motivo)
+        ])
+
     return response
