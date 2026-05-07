@@ -116,12 +116,20 @@ def exportar_reservas_csv(request):
         
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="reservas.csv"'
-    
-    writer = csv.writer(response)
+
+    writer = csv.writer(response, quoting=csv.QUOTE_ALL)
     writer.writerow(['Usuario', 'Laboratorio', 'Fecha', 'Inicio', 'Fin', 'Estado', 'Motivo'])
-    
+
     reservas = Reserva.objects.all()
     for r in reservas:
-        writer.writerow([r.usuario.username, r.laboratorio, r.fecha, r.hora_inicio, r.hora_fin, r.get_estado_display(), r.motivo])
-        
+        writer.writerow([
+            escape_csv_field(r.usuario.username),
+            escape_csv_field(r.laboratorio),
+            r.fecha,
+            r.hora_inicio,
+            r.hora_fin,
+            r.get_estado_display(),
+            escape_csv_field(r.motivo)
+        ])
+
     return response
