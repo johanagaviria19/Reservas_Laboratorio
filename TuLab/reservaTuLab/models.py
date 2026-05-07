@@ -51,9 +51,18 @@ class Reserva(models.Model):
         # Lógica de solapamiento: (InicioA < FinB) AND (FinA > InicioB)
         for conflicto in conflictos:
             if (self.hora_inicio < conflicto.hora_fin) and (self.hora_fin > conflicto.hora_inicio):
+                # Obtener otras reservas del día para informar horarios ocupados
+                reservas_dia = Reserva.objects.filter(
+                    laboratorio=self.laboratorio,
+                    fecha=self.fecha
+                ).exclude(pk=self.pk).exclude(estado='rechazada').order_by('hora_inicio')
+                
+                horarios_ocupados = ", ".join([f"{r.hora_inicio.strftime('%H:%M')} - {r.hora_fin.strftime('%H:%M')}" for r in reservas_dia])
+                
                 raise ValidationError(
                     f"Conflicto de horario: El laboratorio {self.laboratorio} ya tiene una reserva "
-                    f"de {conflicto.hora_inicio} a {conflicto.hora_fin}."
+                    f"de {conflicto.hora_inicio.strftime('%H:%M')} a {conflicto.hora_fin.strftime('%H:%M')}. "
+                    f"Horarios ocupados para este día: {horarios_ocupados}. Por favor, elija un horario fuera de estos rangos."
                 )
 
     def save(self, *args, **kwargs):

@@ -73,9 +73,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'reserva_list' %}">Dashboard</a>
                     </li>
+                    {% if not user.is_superuser %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'reserva_create' %}">Nueva Reserva</a>
                     </li>
+                    {% endif %}
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">

@@ -8,9 +8,11 @@
         <h2 class="fw-bold mb-0">Dashboard de Reservas</h2>
         <p class="text-muted">Gestiona y visualiza el estado de los laboratorios</p>
     </div>
+    {% if not user.is_superuser %}
     <a href="{% url 'reserva_create' %}" class="btn btn-primary shadow-sm">
         <i class="bi bi-plus-lg me-1"></i>Nueva Reserva
     </a>
+    {% endif %}
 </div>
 
 {% if user.is_superuser %}
@@ -40,9 +42,14 @@
                         <h6 class="text-uppercase small fw-bold opacity-75">Aprobadas</h6>
                         <h2 class="display-6 fw-bold mb-0">{{ aprobadas }}</h2>
                     </div>
-                    <a href="{% url 'exportar_csv' %}" class="btn btn-sm btn-light mt-1">
-                        <i class="bi bi-download me-1"></i>CSV
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'estadisticas' %}" class="btn btn-sm btn-light mt-1">
+                            <i class="bi bi-graph-up me-1"></i>Estadísticas
+                        </a>
+                        <a href="{% url 'exportar_csv' %}" class="btn btn-sm btn-light mt-1">
+                            <i class="bi bi-download me-1"></i>CSV
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -107,12 +114,12 @@
                     <td class="pe-4 text-end">
                         <div class="btn-group">
                             {% if user.is_superuser %}
+                                {# El administrador solo ve el botón de aprobar/rechazar #}
                                 <a href="{% url 'reserva_status_update' reserva.pk %}" class="btn btn-sm btn-outline-dark" title="Cambiar Estado">
                                     <i class="bi bi-shield-check"></i>
                                 </a>
-                            {% endif %}
-                            
-                            {% if reserva.usuario == user and reserva.estado == 'pendiente' %}
+                            {% elif reserva.usuario == user and reserva.estado == 'pendiente' %}
+                                {# El docente solo ve editar/eliminar si la reserva es suya y está pendiente #}
                                 <a href="{% url 'reserva_update' reserva.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>

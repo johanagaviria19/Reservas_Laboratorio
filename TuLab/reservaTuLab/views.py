@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Reserva
 from .forms import ReservaForm, ReservaStatusForm
+from django.db.models import Count
 import csv
 from django.http import HttpResponse
 
@@ -40,11 +41,15 @@ class ReservaListView(LoginRequiredMixin, ListView):
             context['aprobadas'] = Reserva.objects.filter(estado='aprobada').count()
         return context
 
-class ReservaCreateView(LoginRequiredMixin, CreateView):
+class ReservaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Reserva
     form_class = ReservaForm
     template_name = 'reservaTuLab/reserva_form.html'
     success_url = reverse_lazy('reserva_list')
+
+    def test_func(self):
+        # El administrador NO puede crear reservas, solo los docentes
+        return not self.request.user.is_superuser
 
     def form_valid(self, form):
         form.instance.usuario = self.request.user
@@ -59,8 +64,8 @@ class ReservaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def test_func(self):
         reserva = self.get_object()
-        # Solo el dueño puede editar y solo si está pendiente
-        return reserva.usuario == self.request.user and reserva.estado == 'pendiente'
+        # Solo el dueño (que no sea admin) puede editar y solo si está pendiente
+        return not self.request.user.is_superuser and reserva.usuario == self.request.user and reserva.estado == 'pendiente'
 
     def form_valid(self, form):
         messages.success(self.request, "Reserva actualizada con éxito.")
@@ -73,8 +78,8 @@ class ReservaDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self):
         reserva = self.get_object()
-        # Solo el dueño puede borrar y solo si está pendiente
-        return reserva.usuario == self.request.user and reserva.estado == 'pendiente'
+        # Solo el dueño (que no sea admin) puede borrar y solo si está pendiente
+        return not self.request.user.is_superuser and reserva.usuario == self.request.user and reserva.estado == 'pendiente'
 
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, "Reserva eliminada con éxito.")
@@ -93,6 +98,17 @@ class ReservaStatusUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVie
     def form_valid(self, form):
         messages.success(self.request, f"Estado de la reserva actualizado a {form.instance.get_estado_display()}.")
         return super().form_valid(form)
+
+class EstadisticasView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Reserva
+    template_name = 'reservaTuLab/estadisticas.html'
+    context_object_name = 'estadisticas'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_queryset(self):
+        return Reserva.objects.values('laboratorio').annotate(total=Count('id')).order_by('-total')
 
 def exportar_reservas_csv(request):
     if not request.user.is_superuser:
