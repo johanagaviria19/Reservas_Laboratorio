@@ -9,6 +9,7 @@ urlpatterns = [
     path('eliminar/<int:pk>/', views.ReservaDeleteView.as_view(), name='reserva_delete'),
     path('estado/<int:pk>/', views.ReservaStatusUpdateView.as_view(), name='reserva_status_update'),
     path('exportar-csv/', views.exportar_reservas_csv, name='exportar_csv'),
+    path('estadisticas/', views.EstadisticasView.as_view(), name='estadisticas'),
     
     # Autenticación
     path('login/', auth_views.LoginView.as_view(template_name='reservaTuLab/login.html'), name='login'),
