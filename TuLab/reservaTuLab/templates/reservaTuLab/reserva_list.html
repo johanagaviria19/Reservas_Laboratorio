@@ -1,0 +1,63 @@
+{% extends 'reservaTuLab/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Listado de Reservas</h1>
+    <a href="{% url 'reserva_create' %}" class="btn btn-success">Nueva Reserva</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="laboratorio" class="form-control" placeholder="Laboratorio" value="{{ request.GET.laboratorio }}">
+            </div>
+            <div class="col-md-4">
+                <input type="date" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="{% url 'reserva_list' %}" class="btn btn-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Laboratorio</th>
+            <th>Fecha</th>
+            <th>Horario</th>
+            <th>Usuario</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reserva in reservas %}
+        <tr>
+            <td>{{ reserva.laboratorio }}</td>
+            <td>{{ reserva.fecha }}</td>
+            <td>{{ reserva.hora_inicio }} - {{ reserva.hora_fin }}</td>
+            <td>{{ reserva.usuario.username }}</td>
+            <td>
+                <span class="badge {% if reserva.estado == 'aprobada' %}bg-success{% elif reserva.estado == 'pendiente' %}bg-warning{% else %}bg-danger{% endif %}">
+                    {{ reserva.get_estado_display }}
+                </span>
+            </td>
+            <td>
+                {% if user.is_staff or reserva.estado == 'pendiente' %}
+                <a href="{% url 'reserva_update' reserva.pk %}" class="btn btn-sm btn-info">Editar</a>
+                <a href="{% url 'reserva_delete' reserva.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center">No hay reservas registradas.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
